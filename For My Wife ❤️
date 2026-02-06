@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For My Wife ❤️</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #fff0f3;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        h1 {
+            color: #ff4d6d;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            padding: 0 20px;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+        }
+
+        .btn {
+            padding: 15px 35px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-weight: bold;
+            touch-action: manipulation;
+        }
+
+        #yesBtn {
+            background-color: #ff4d6d;
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 77, 109, 0.4);
+            z-index: 10;
+        }
+
+        #noBtn {
+            background-color: #590d22;
+            color: white;
+            position: absolute;
+            transition: all 0.1s ease;
+            z-index: 5;
+        }
+
+        #message {
+            display: none;
+            color: #ff4d6d;
+            font-size: 2rem;
+            margin-top: 20px;
+            animation: heartBeat 1.2s infinite;
+        }
+
+        @keyframes heartBeat {
+            0% { transform: scale(1); }
+            14% { transform: scale(1.1); }
+            28% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1 id="question">Do you love me? ❤️</h1>
+
+    <div class="container" id="mainContainer">
+        <button id="yesBtn" class="btn" onclick="celebrate()">Yes!</button>
+        <button id="noBtn" class="btn">No</button>
+    </div>
+
+    <div id="message">I knew it! Love you too! 😘</div>
+
+    <audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+
+    <script>
+        const noBtn = document.getElementById('noBtn');
+        const yesBtn = document.getElementById('yesBtn');
+        const question = document.getElementById('question');
+        const message = document.getElementById('message');
+        const music = document.getElementById('bgMusic');
+
+        // Initial position for NO button
+        noBtn.style.left = 'calc(50% + 20px)';
+        noBtn.style.top = '100px';
+
+        function moveButton() {
+            // Get screen dimensions minus button size
+            const x = Math.random() * (window.innerWidth - noBtn.offsetWidth);
+            const y = Math.random() * (window.innerHeight - noBtn.offsetHeight);
+            
+            noBtn.style.left = `${x}px`;
+            noBtn.style.top = `${y}px`;
+        }
+
+        // Trigger on Mouse Move (Desktop)
+        noBtn.addEventListener('mouseover', moveButton);
+
+        // Trigger on Touch (Mobile)
+        noBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            moveButton();
+        });
+
+        function celebrate() {
+            // Hide buttons/question
+            yesBtn.style.display = 'none';
+            noBtn.style.display = 'none';
+            question.style.display = 'none';
+            
+            // Show message
+            message.style.display = 'block';
+
+            // Play music
+            music.play().catch(e => console.log("Audio requires user interaction first"));
+
+            // Heart Confetti
+            var end = Date.now() + (15 * 1000);
+            var colors = ['#ff4d6d', '#ff758f', '#ffb3c1'];
+
+            (function frame() {
+              confetti({
+                particleCount: 3,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: colors
+              });
+              confetti({
+                particleCount: 3,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: colors
+              });
+
+              if (Date.now() < end) {
+                requestAnimationFrame(frame);
+              }
+            }());
+        }
+    </script>
+</body>
+</html>
