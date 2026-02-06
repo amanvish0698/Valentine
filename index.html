@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>For My Wife ❤️</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>For My Queen ❤️</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         body {
@@ -15,55 +15,52 @@
             justify-content: center;
             height: 100vh;
             background-color: #fff0f3;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Arial', sans-serif;
             overflow: hidden;
             text-align: center;
+            touch-action: none; /* Prevents scrolling while playing */
         }
 
         h1 {
             color: #ff4d6d;
-            font-size: 2.5rem;
-            margin-bottom: 30px;
+            font-size: 2rem;
+            margin-bottom: 50px;
             padding: 0 20px;
-        }
-
-        .container {
-            position: relative;
-            width: 100%;
-            height: 300px;
-        }
-
-        .btn {
-            padding: 15px 35px;
-            font-size: 1.2rem;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            font-weight: bold;
-            touch-action: manipulation;
+            z-index: 100;
         }
 
         #yesBtn {
+            padding: 15px 40px;
+            font-size: 1.5rem;
             background-color: #ff4d6d;
             color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
             box-shadow: 0 4px 15px rgba(255, 77, 109, 0.4);
+            font-weight: bold;
             z-index: 10;
         }
 
         #noBtn {
+            padding: 12px 30px;
+            font-size: 1.1rem;
             background-color: #590d22;
             color: white;
-            position: absolute;
-            transition: all 0.1s ease;
+            border: none;
+            border-radius: 50px;
+            position: fixed; /* Keeps it relative to the whole screen */
+            transition: all 0.15s ease-out;
             z-index: 5;
+            font-weight: bold;
+            touch-action: none;
         }
 
         #message {
             display: none;
             color: #ff4d6d;
-            font-size: 2rem;
-            margin-top: 20px;
+            font-size: 2.5rem;
+            font-weight: bold;
             animation: heartBeat 1.2s infinite;
         }
 
@@ -72,20 +69,33 @@
             14% { transform: scale(1.1); }
             28% { transform: scale(1); }
         }
+
+        /* Annoying shake animation */
+        .shake {
+            animation: shake 0.2s ease-in-out;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(0,0); }
+            25% { transform: translate(5px, 5px); }
+            50% { transform: translate(-5px, -5px); }
+            75% { transform: translate(5px, -5px); }
+            100% { transform: translate(0,0); }
+        }
     </style>
 </head>
 <body>
 
     <h1 id="question">Do you love me? ❤️</h1>
 
-    <div class="container" id="mainContainer">
-        <button id="yesBtn" class="btn" onclick="celebrate()">Yes!</button>
-        <button id="noBtn" class="btn">No</button>
-    </div>
+    <button id="yesBtn" onclick="celebrate()">YES</button>
+    <button id="noBtn">No</button>
 
-    <div id="message">I knew it! Love you too! 😘</div>
+    <div id="message">I LOVE YOU TOO! 💖</div>
 
-    <audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+    <audio id="bgMusic" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
         const noBtn = document.getElementById('noBtn');
@@ -94,64 +104,68 @@
         const message = document.getElementById('message');
         const music = document.getElementById('bgMusic');
 
-        // Initial position for NO button
-        noBtn.style.left = 'calc(50% + 20px)';
-        noBtn.style.top = '100px';
+        // Set initial NO button position near the Yes button
+        function setInitial() {
+            noBtn.style.left = (window.innerWidth / 2 - 50) + "px";
+            noBtn.style.top = (window.innerHeight / 2 + 80) + "px";
+        }
+        setInitial();
 
-        function moveButton() {
-            // Get screen dimensions minus button size
-            const x = Math.random() * (window.innerWidth - noBtn.offsetWidth);
-            const y = Math.random() * (window.innerHeight - noBtn.offsetHeight);
-            
-            noBtn.style.left = `${x}px`;
-            noBtn.style.top = `${y}px`;
+        function moveButton(e) {
+            // Add shake class for annoyance
+            noBtn.classList.add('shake');
+            setTimeout(() => noBtn.classList.remove('shake'), 200);
+
+            // Calculate safe boundaries (keeping button 100% on screen)
+            const padding = 50;
+            const maxX = window.innerWidth - noBtn.offsetWidth - padding;
+            const maxY = window.innerHeight - noBtn.offsetHeight - padding;
+
+            const randomX = Math.max(padding, Math.floor(Math.random() * maxX));
+            const randomY = Math.max(padding, Math.floor(Math.random() * maxY));
+
+            noBtn.style.left = randomX + "px";
+            noBtn.style.top = randomY + "px";
         }
 
-        // Trigger on Mouse Move (Desktop)
+        // Desktop hover
         noBtn.addEventListener('mouseover', moveButton);
-
-        // Trigger on Touch (Mobile)
+        
+        // Mobile touch (triggers instantly)
         noBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Prevents clicking
             moveButton();
         });
 
         function celebrate() {
-            // Hide buttons/question
             yesBtn.style.display = 'none';
             noBtn.style.display = 'none';
             question.style.display = 'none';
-            
-            // Show message
             message.style.display = 'block';
 
-            // Play music
-            music.play().catch(e => console.log("Audio requires user interaction first"));
+            // Start music
+            music.play();
 
-            // Heart Confetti
-            var end = Date.now() + (15 * 1000);
-            var colors = ['#ff4d6d', '#ff758f', '#ffb3c1'];
+            // Continuous Confetti
+            var duration = 15 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
 
-            (function frame() {
-              confetti({
-                particleCount: 3,
-                angle: 60,
-                spread: 55,
-                origin: { x: 0 },
-                colors: colors
-              });
-              confetti({
-                particleCount: 3,
-                angle: 120,
-                spread: 55,
-                origin: { x: 1 },
-                colors: colors
-              });
+            function randomInRange(min, max) {
+              return Math.random() * (max - min) + min;
+            }
 
-              if (Date.now() < end) {
-                requestAnimationFrame(frame);
+            var interval = setInterval(function() {
+              var timeLeft = animationEnd - Date.now();
+
+              if (timeLeft <= 0) {
+                return clearInterval(interval);
               }
-            }());
+
+              var particleCount = 50 * (timeLeft / duration);
+              confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+              confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
         }
     </script>
 </body>
