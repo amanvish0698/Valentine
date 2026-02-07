@@ -2,170 +2,162 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>For My Queen ❤️</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Little Something For You...</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background-color: #fff0f3;
-            font-family: 'Arial', sans-serif;
+            background-color: #fff5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
-            text-align: center;
-            touch-action: none; /* Prevents scrolling while playing */
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        h1 {
-            color: #ff4d6d;
-            font-size: 2rem;
-            margin-bottom: 50px;
-            padding: 0 20px;
-            z-index: 100;
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
         }
 
-        #yesBtn {
-            padding: 15px 40px;
-            font-size: 1.5rem;
-            background-color: #ff4d6d;
-            color: white;
-            border: none;
-            border-radius: 50px;
+        .petal {
+            position: absolute;
+            width: 40px;
+            height: 50px;
+            background-color: #e91e63;
+            border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(255, 77, 109, 0.4);
-            font-weight: bold;
+            transition: all 0.5s ease-out;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
             z-index: 10;
         }
 
-        #noBtn {
-            padding: 12px 30px;
+        .note {
+            position: absolute;
+            font-style: italic;
+            color: #c2185b;
             font-size: 1.1rem;
-            background-color: #590d22;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            position: fixed; /* Keeps it relative to the whole screen */
-            transition: all 0.15s ease-out;
-            z-index: 5;
-            font-weight: bold;
-            touch-action: none;
+            pointer-events: none;
+            animation: fadeIn 1s ease-in-out forwards;
         }
 
-        #message {
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 0.7; transform: translateY(0); }
+        }
+
+        #counter {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-size: 1.2rem;
+            color: #ad1457;
+        }
+
+        #final-message {
             display: none;
-            color: #ff4d6d;
-            font-size: 2.5rem;
-            font-weight: bold;
-            animation: heartBeat 1.2s infinite;
+            text-align: center;
+            z-index: 100;
+            animation: scaleUp 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
-        @keyframes heartBeat {
-            0% { transform: scale(1); }
-            14% { transform: scale(1.1); }
-            28% { transform: scale(1); }
+        @keyframes scaleUp {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
         }
 
-        /* Annoying shake animation */
-        .shake {
-            animation: shake 0.2s ease-in-out;
+        .heart {
+            font-size: 100px;
+            color: #ff1744;
+            margin-bottom: 20px;
         }
 
-        @keyframes shake {
-            0% { transform: translate(0,0); }
-            25% { transform: translate(5px, 5px); }
-            50% { transform: translate(-5px, -5px); }
-            75% { transform: translate(5px, -5px); }
-            100% { transform: translate(0,0); }
-        }
+        h1 { color: #880e4f; margin-bottom: 10px; }
+        p { color: #ad1457; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
-    <h1 id="question">Do you love me? ❤️</h1>
+    <div id="counter">Petals collected: <span id="count">0</span>/10</div>
 
-    <button id="yesBtn" onclick="celebrate()">YES</button>
-    <button id="noBtn">No</button>
+    <div id="game-container">
+        <div id="target-petal" class="petal"></div>
+    </div>
 
-    <div id="message">I LOVE YOU TOO! 💖</div>
-
-    <audio id="bgMusic" loop>
-        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" type="audio/mpeg">
-    </audio>
+    <div id="final-message">
+        <div class="heart">❤️</div>
+        <h1>Happy Rose Day!</h1>
+        <p>Like these petals, my life is incomplete without you.</p>
+        <p>You make everything bloom. 🌹</p>
+    </div>
 
     <script>
-        const noBtn = document.getElementById('noBtn');
-        const yesBtn = document.getElementById('yesBtn');
-        const question = document.getElementById('question');
-        const message = document.getElementById('message');
-        const music = document.getElementById('bgMusic');
-
-        // Set initial NO button position near the Yes button
-        function setInitial() {
-            noBtn.style.left = (window.innerWidth / 2 - 50) + "px";
-            noBtn.style.top = (window.innerHeight / 2 + 80) + "px";
-        }
-        setInitial();
-
-        function moveButton(e) {
-            // Add shake class for annoyance
-            noBtn.classList.add('shake');
-            setTimeout(() => noBtn.classList.remove('shake'), 200);
-
-            // Calculate safe boundaries (keeping button 100% on screen)
-            const padding = 50;
-            const maxX = window.innerWidth - noBtn.offsetWidth - padding;
-            const maxY = window.innerHeight - noBtn.offsetHeight - padding;
-
-            const randomX = Math.max(padding, Math.floor(Math.random() * maxX));
-            const randomY = Math.max(padding, Math.floor(Math.random() * maxY));
-
-            noBtn.style.left = randomX + "px";
-            noBtn.style.top = randomY + "px";
-        }
-
-        // Desktop hover
-        noBtn.addEventListener('mouseover', moveButton);
+        const petal = document.getElementById('target-petal');
+        const countDisplay = document.getElementById('count');
+        const container = document.getElementById('game-container');
+        const finalMessage = document.getElementById('final-message');
         
-        // Mobile touch (triggers instantly)
-        noBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Prevents clicking
-            moveButton();
+        let count = 0;
+        const total = 10;
+
+        const messages = [
+            "Wait, come back!",
+            "You're fast!",
+            "Almost got me...",
+            "The day we first met...",
+            "Your beautiful smile...",
+            "Every moment with you...",
+            "Is like a blooming rose.",
+            "Just a few more!",
+            "You're so patient with me.",
+            "I love you!"
+        ];
+
+        // Randomly position the first petal
+        movePetal();
+
+        petal.addEventListener('click', () => {
+            // Leave a note where the petal was
+            const note = document.createElement('div');
+            note.className = 'note';
+            note.style.left = petal.style.left;
+            note.style.top = petal.style.top;
+            note.innerText = messages[count];
+            container.appendChild(note);
+
+            count++;
+            countDisplay.innerText = count;
+
+            if (count < total) {
+                movePetal();
+            } else {
+                finishGame();
+            }
         });
 
-        function celebrate() {
-            yesBtn.style.display = 'none';
-            noBtn.style.display = 'none';
-            question.style.display = 'none';
-            message.style.display = 'block';
+        function movePetal() {
+            const x = Math.random() * (window.innerWidth - 60) + 20;
+            const y = Math.random() * (window.innerHeight - 60) + 20;
+            const rotation = Math.random() * 360;
+            
+            petal.style.left = `${x}px`;
+            petal.style.top = `${y}px`;
+            petal.style.transform = `rotate(${rotation}deg)`;
+        }
 
-            // Start music
-            music.play();
-
-            // Continuous Confetti
-            var duration = 15 * 1000;
-            var animationEnd = Date.now() + duration;
-            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-            function randomInRange(min, max) {
-              return Math.random() * (max - min) + min;
-            }
-
-            var interval = setInterval(function() {
-              var timeLeft = animationEnd - Date.now();
-
-              if (timeLeft <= 0) {
-                return clearInterval(interval);
-              }
-
-              var particleCount = 50 * (timeLeft / duration);
-              confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-              confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-            }, 250);
+        function finishGame() {
+            petal.style.display = 'none';
+            container.style.display = 'none';
+            document.getElementById('counter').style.display = 'none';
+            
+            // Background color change
+            document.body.style.transition = "background-color 2s";
+            document.body.style.backgroundColor = "#ffebee";
+            
+            finalMessage.style.display = 'block';
         }
     </script>
 </body>
