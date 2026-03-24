@@ -1,164 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A Little Something For You...</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #fff5f5;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bird Game Engine</title>
 
-        #game-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-        }
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: #fff;
+    text-align: center;
+}
 
-        .petal {
-            position: absolute;
-            width: 40px;
-            height: 50px;
-            background-color: #e91e63;
-            border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;
-            cursor: pointer;
-            transition: all 0.5s ease-out;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-            z-index: 10;
-        }
+#top-bar {
+    padding: 10px;
+    background: #222;
+}
 
-        .note {
-            position: absolute;
-            font-style: italic;
-            color: #c2185b;
-            font-size: 1.1rem;
-            pointer-events: none;
-            animation: fadeIn 1s ease-in-out forwards;
-        }
+button, select {
+    margin: 5px;
+    padding: 8px;
+}
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 0.7; transform: translateY(0); }
-        }
+canvas {
+    display: block;
+    margin: auto;
+    background: #000;
+    touch-action: manipulation;
+}
 
-        #counter {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            font-size: 1.2rem;
-            color: #ad1457;
-        }
-
-        #final-message {
-            display: none;
-            text-align: center;
-            z-index: 100;
-            animation: scaleUp 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        @keyframes scaleUp {
-            from { transform: scale(0); }
-            to { transform: scale(1); }
-        }
-
-        .heart {
-            font-size: 100px;
-            color: #ff1744;
-            margin-bottom: 20px;
-        }
-
-        h1 { color: #880e4f; margin-bottom: 10px; }
-        p { color: #ad1457; font-size: 1.2rem; }
-    </style>
+#preview {
+    max-width: 100px;
+    margin-top: 10px;
+}
+</style>
 </head>
+
 <body>
 
-    <div id="counter">Petals collected: <span id="count">0</span>/10</div>
+<div id="top-bar">
+    <input type="file" id="upload">
+    <button onclick="saveCharacter()">Save Character</button>
 
-    <div id="game-container">
-        <div id="target-petal" class="petal"></div>
-    </div>
+    <select id="characterSelect" onchange="loadCharacter()"></select>
 
-    <div id="final-message">
-        <div class="heart">❤️</div>
-        <h1>Happy Rose Day!</h1>
-        <p>Like these petals, my life is incomplete without you.</p>
-        <p>You make everything bloom. 🌹</p>
-    </div>
+    <select id="theme" onchange="setTheme()">
+        <option value="fire">🔥 Fire</option>
+        <option value="water">💧 Water</option>
+    </select>
+</div>
 
-    <script>
-        const petal = document.getElementById('target-petal');
-        const countDisplay = document.getElementById('count');
-        const container = document.getElementById('game-container');
-        const finalMessage = document.getElementById('final-message');
-        
-        let count = 0;
-        const total = 10;
+<canvas id="gameCanvas"></canvas>
+<img id="preview"/>
 
-        const messages = [
-            "Wait, come back!",
-            "You're fast!",
-            "Almost got me...",
-            "The day we first met...",
-            "Your beautiful smile...",
-            "Every moment with you...",
-            "Is like a blooming rose.",
-            "Just a few more!",
-            "You're so patient with me.",
-            "I love you!"
-        ];
+<script>
+/* =========================
+   CANVAS SETUP (RESPONSIVE)
+========================= */
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-        // Randomly position the first petal
-        movePetal();
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight - 80;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
-        petal.addEventListener('click', () => {
-            // Leave a note where the petal was
-            const note = document.createElement('div');
-            note.className = 'note';
-            note.style.left = petal.style.left;
-            note.style.top = petal.style.top;
-            note.innerText = messages[count];
-            container.appendChild(note);
+/* =========================
+   IMAGE UPLOAD + CROP
+========================= */
+let uploadedImage = null;
 
-            count++;
-            countDisplay.innerText = count;
+document.getElementById("upload").addEventListener("change", function(e) {
+    const file = e.target.files[0];
+    const img = new Image();
+    img.onload = () => {
+        uploadedImage = cropImage(img);
+        document.getElementById("preview").src = uploadedImage;
+    };
+    img.src = URL.createObjectURL(file);
+});
 
-            if (count < total) {
-                movePetal();
-            } else {
-                finishGame();
-            }
-        });
+function cropImage(img) {
+    const size = Math.min(img.width, img.height);
+    const tempCanvas = document.createElement("canvas");
+    const tctx = tempCanvas.getContext("2d");
 
-        function movePetal() {
-            const x = Math.random() * (window.innerWidth - 60) + 20;
-            const y = Math.random() * (window.innerHeight - 60) + 20;
-            const rotation = Math.random() * 360;
-            
-            petal.style.left = `${x}px`;
-            petal.style.top = `${y}px`;
-            petal.style.transform = `rotate(${rotation}deg)`;
+    tempCanvas.width = 100;
+    tempCanvas.height = 100;
+
+    tctx.drawImage(
+        img,
+        (img.width - size) / 2,
+        (img.height - size) / 2,
+        size,
+        size,
+        0,
+        0,
+        100,
+        100
+    );
+
+    return tempCanvas.toDataURL();
+}
+
+/* =========================
+   CHARACTER LIBRARY (LOCAL STORAGE)
+========================= */
+function saveCharacter() {
+    if (!uploadedImage) return alert("Upload image first");
+
+    let characters = JSON.parse(localStorage.getItem("birds") || "[]");
+    characters.push(uploadedImage);
+    localStorage.setItem("birds", JSON.stringify(characters));
+
+    loadCharacterList();
+}
+
+function loadCharacterList() {
+    const select = document.getElementById("characterSelect");
+    select.innerHTML = "";
+
+    let characters = JSON.parse(localStorage.getItem("birds") || "[]");
+
+    characters.forEach((c, i) => {
+        let opt = document.createElement("option");
+        opt.value = i;
+        opt.text = "Bird " + (i + 1);
+        select.appendChild(opt);
+    });
+}
+
+function loadCharacter() {
+    let characters = JSON.parse(localStorage.getItem("birds") || "[]");
+    currentBird.src = characters[document.getElementById("characterSelect").value];
+}
+
+loadCharacterList();
+
+/* =========================
+   GAME ENGINE
+========================= */
+let bird = { x: 100, y: 200, velocity: 0 };
+let gravity = 0.5;
+let lift = -8;
+
+let currentBird = new Image();
+currentBird.src = "";
+
+canvas.addEventListener("click", flap);
+canvas.addEventListener("touchstart", flap);
+
+function flap() {
+    bird.velocity = lift;
+    playSound("flap");
+}
+
+/* =========================
+   OBSTACLES
+========================= */
+let pipes = [];
+
+function createPipe() {
+    let gap = 150;
+    let top = Math.random() * (canvas.height - gap);
+
+    pipes.push({
+        x: canvas.width,
+        top: top,
+        bottom: canvas.height - (top + gap)
+    });
+}
+
+setInterval(createPipe, 2000);
+
+/* =========================
+   THEMES
+========================= */
+let theme = "fire";
+
+function setTheme() {
+    theme = document.getElementById("theme").value;
+}
+
+/* =========================
+   AUDIO ENGINE (WEB AUDIO API)
+========================= */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+    const osc = audioCtx.createOscillator();
+    osc.connect(audioCtx.destination);
+
+    if (type === "flap") osc.frequency.value = 500;
+    if (type === "hit") osc.frequency.value = 100;
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.1);
+}
+
+/* =========================
+   GAME LOOP
+========================= */
+function update() {
+    bird.velocity += gravity;
+    bird.y += bird.velocity;
+
+    if (bird.y > canvas.height) {
+        bird.y = canvas.height;
+        playSound("hit");
+    }
+
+    pipes.forEach(p => {
+        p.x -= 3;
+
+        // collision
+        if (
+            bird.x < p.x + 50 &&
+            bird.x + 50 > p.x &&
+            (bird.y < p.top || bird.y > canvas.height - p.bottom)
+        ) {
+            playSound("hit");
         }
+    });
+}
 
-        function finishGame() {
-            petal.style.display = 'none';
-            container.style.display = 'none';
-            document.getElementById('counter').style.display = 'none';
-            
-            // Background color change
-            document.body.style.transition = "background-color 2s";
-            document.body.style.backgroundColor = "#ffebee";
-            
-            finalMessage.style.display = 'block';
-        }
-    </script>
+function draw() {
+    // Theme background
+    if (theme === "fire") ctx.fillStyle = "#330000";
+    else ctx.fillStyle = "#001f3f";
+
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Bird
+    if (currentBird.src) {
+        ctx.drawImage(currentBird, bird.x, bird.y, 50, 50);
+    } else {
+        ctx.fillStyle = "yellow";
+        ctx.fillRect(bird.x, bird.y, 50, 50);
+    }
+
+    // Pipes
+    pipes.forEach(p => {
+        ctx.fillStyle = theme === "fire" ? "red" : "cyan";
+
+        ctx.fillRect(p.x, 0, 50, p.top);
+        ctx.fillRect(p.x, canvas.height - p.bottom, 50, p.bottom);
+    });
+}
+
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
 </body>
 </html>
